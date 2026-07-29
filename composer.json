@@ -1,0 +1,22 @@
+{
+    "name": "faneraiy14/secretscan",
+    "description": "CLI-утиліта, що шукає випадково закомічені секрети (API-ключі, токени, приватні ключі) у файлах проєкту.",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Faneraiy14"
+        }
+    ],
+    "require": {
+        "php": ">=8.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "SecretScan\\": "src/"
+        }
+    },
+    "bin": [
+        "bin/secretscan"
+    ]
+}
