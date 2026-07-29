@@ -18,6 +18,15 @@ final class SecretScanner
         '<', '{{', '${', 'test_key', 'testkey',
     ];
 
+    // Регексами ловимо тільки ВІДОМІ форми секретів (ghp_, AKIA, ...).
+    // Ентропійна перевірка (Шеннон) — доповнення для випадкових на
+    // вигляд рядків, що не збігаються з жодним відомим форматом: власні
+    // токени, внутрішні API-ключі тощо. Довжина й поріг підібрані так,
+    // щоб не спрацьовувати на звичайних словах/реченнях (природна мова
+    // має помітно нижчу ентропію на символ, ніж випадковий base64/hex).
+    private const ENTROPY_MIN_LENGTH = 20;
+    private const ENTROPY_THRESHOLD = 4.0;
+
     /**
      * @param array<string,string>|null $extraRules додаткові правила
      *        (назва => regex), об'єднуються з дефолтними, можуть їх
@@ -96,6 +105,7 @@ final class SecretScanner
             if (str_contains($line, 'secretscan:ignore')) {
                 continue;
             }
+            $foundOnLine = [];
             foreach ($this->rules as $ruleName => $pattern) {
                 if (!preg_match_all($pattern, $line, $matches, PREG_SET_ORDER)) {
                     continue;
@@ -109,6 +119,7 @@ final class SecretScanner
                     if ($this->looksLikePlaceholder($secretValue)) {
                         continue;
                     }
+                    $foundOnLine[$secretValue] = true;
                     $findings[] = new Finding(
                         file: $file,
                         line: $lineIndex + 1,
@@ -117,9 +128,73 @@ final class SecretScanner
                     );
                 }
             }
+
+            foreach ($this->scanEntropyCandidates($line) as $candidate) {
+                // Уже знайдено конкретним regex-правилом на цьому рядку —
+                // не дублювати тим самим значенням під іншою назвою.
+                if (isset($foundOnLine[$candidate]) || $this->looksLikePlaceholder($candidate)) {
+                    continue;
+                }
+                $findings[] = new Finding(
+                    file: $file,
+                    line: $lineIndex + 1,
+                    rule: 'High Entropy String (Shannon)',
+                    redacted: $this->redact($candidate)
+                );
+            }
         }
 
         return $findings;
+    }
+
+    /**
+     * Кандидати на "випадковий на вигляд" секрет: рядкові літерали в
+     * лапках достатньої довжини з ентропією Шеннона вище порогу. Не
+     * прив'язано до конкретного імені змінної/ключового слова — на
+     * відміну від Generic Secret Assignment, тут ловимо власні токени,
+     * яких жодне з відомих правил не очікує.
+     *
+     * @return string[]
+     */
+    private function scanEntropyCandidates(string $line): array
+    {
+        $pattern = '/["\']([A-Za-z0-9+\/_=\-]{' . self::ENTROPY_MIN_LENGTH . ',})["\']/';
+        if (!preg_match_all($pattern, $line, $matches)) {
+            return [];
+        }
+
+        $candidates = [];
+        foreach ($matches[1] as $candidate) {
+            if ($this->shannonEntropy($candidate) >= self::ENTROPY_THRESHOLD) {
+                $candidates[] = $candidate;
+            }
+        }
+        return $candidates;
+    }
+
+    // Ентропія Шеннона в бітах на символ: -Σ p(c)·log2(p(c)) за частотами
+    // символів у рядку. Випадковий base64/hex-рядок близький до
+    // максимуму для свого алфавіту; звичайний текст/ідентифікатор —
+    // помітно нижче через нерівномірний розподіл символів.
+    private function shannonEntropy(string $value): float
+    {
+        $len = strlen($value);
+        if ($len === 0) {
+            return 0.0;
+        }
+
+        $frequency = [];
+        for ($i = 0; $i < $len; $i++) {
+            $char = $value[$i];
+            $frequency[$char] = ($frequency[$char] ?? 0) + 1;
+        }
+
+        $entropy = 0.0;
+        foreach ($frequency as $count) {
+            $probability = $count / $len;
+            $entropy -= $probability * log($probability, 2);
+        }
+        return $entropy;
     }
 
     /**

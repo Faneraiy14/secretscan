@@ -1,0 +1,24 @@
+name: 'secretscan'
+description: 'Сканує репозиторій на випадково закомічені секрети (API-ключі, токени, приватні ключі) перед злиттям PR.'
+author: 'Faneraiy14'
+branding:
+  icon: 'shield'
+  color: 'red'
+
+inputs:
+  path:
+    description: 'Шлях для сканування відносно кореня репозиторію'
+    required: false
+    default: '.'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+
+    - name: Run secretscan
+      shell: bash
+      run: php "${{ github.action_path }}/bin/secretscan" "${{ inputs.path }}"

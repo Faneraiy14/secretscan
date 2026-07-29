@@ -185,6 +185,24 @@ rrmdir($dirDirty);
 check('--help: exit=0', $exitHelp === 0);
 check('--help: показує "secretscan"', str_contains($outHelp, 'secretscan'));
 
+// --- Тест 12: ентропійна перевірка (Шеннон) ловить власні токени без
+// відомого формату ---
+echo "12. Ентропійна перевірка (Шеннон) — токени без відомого формату\n";
+$f = tempFile('const INTERNAL_TOKEN = "aB3xK9mQ7pL2vN8wZ1tR6yU4sD0fG5hJ"'); // secretscan:ignore
+$findings = $scanner->scanFile($f);
+check('знайдено як High Entropy String', $findings !== [] && $findings[0]->rule === 'High Entropy String (Shannon)');
+rrmdir(dirname($f));
+
+$f2 = tempFile('const MESSAGE = "this is just a normal english sentence value"');
+$findings2 = $scanner->scanFile($f2);
+check('звичайне речення НЕ дає знахідки', $findings2 === []);
+rrmdir(dirname($f2));
+
+$f3 = tempFile('const TOKEN = "ghp_' . str_repeat('a', 36) . '"'); // secretscan:ignore
+$findings3 = $scanner->scanFile($f3);
+check('regex-правило не дублюється ентропійною знахідкою на тому самому значенні', count($findings3) === 1);
+rrmdir(dirname($f3));
+
 echo "\n======================================\n";
 echo "Успішно: {$passed} | Провалено: {$failures}\n";
 
