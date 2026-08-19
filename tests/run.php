@@ -235,7 +235,7 @@ $f = tempFile('DATABASE_URL=postgres://myuser:MyS3cretPass123@db.example.com:543
 $findings = $scanner->scanFile($f);
 check('postgres:// знайдено', $findings !== [] && $findings[0]->rule === 'Database Connection String');
 
-$f2 = tempFile('MONGO_URI=mongodb+srv://admin:hunter2pass456@cluster0.mongodb.net/test');
+$f2 = tempFile('MONGO_URI=mongodb+srv://admin:hunter2pass456@cluster0.example.net/test');
 $findings2 = $scanner->scanFile($f2);
 check('mongodb+srv:// знайдено', $findings2 !== [] && $findings2[0]->rule === 'Database Connection String');
 
