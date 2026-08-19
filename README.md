@@ -42,6 +42,9 @@ php bin/secretscan --json               # машинозчитуваний ви�
 | Slack Token | `xoxb-...`, `xoxp-...` |
 | Stripe Live Key | `sk_live_...`, `pk_live_...` |
 | Google API Key | `AIza...` |
+| Anthropic API Key | `sk-ant-...` |
+| OpenAI API Key | `sk-...`, `sk-proj-...` |
+| Database Connection String | пароль прямо в URL: `postgres://user:pass@host`, `mysql://...`, `mongodb(+srv)://...`, `redis://...` |
 | Приватний ключ | блок `-----BEGIN ... PRIVATE KEY-----` |
 | Generic Bearer Token | `Bearer eyJ...` |
 | Generic Secret Assignment | `password = "..."`, `api_key: "..."` |

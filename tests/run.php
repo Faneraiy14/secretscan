@@ -203,6 +203,50 @@ $findings3 = $scanner->scanFile($f3);
 check('regex-правило не дублюється ентропійною знахідкою на тому самому значенні', count($findings3) === 1);
 rrmdir(dirname($f3));
 
+// --- Тест 13: Anthropic API Key ---
+echo "13. Anthropic API Key\n";
+$f = tempFile('ANTHROPIC_API_KEY=sk-ant-api03-' . str_repeat('a', 40));
+$findings = $scanner->scanFile($f);
+check('знайдено 1', count($findings) === 1);
+check('правило "Anthropic API Key"', $findings !== [] && $findings[0]->rule === 'Anthropic API Key');
+rrmdir(dirname($f));
+
+// --- Тест 14: OpenAI API Key (класичний і proj- формати), без збігу з Anthropic ---
+echo "14. OpenAI API Key\n";
+$f = tempFile('OPENAI_API_KEY=sk-' . str_repeat('a', 48));
+$findings = $scanner->scanFile($f);
+check('класичний формат: знайдено 1', count($findings) === 1);
+check('класичний формат: правило "OpenAI API Key"', $findings !== [] && $findings[0]->rule === 'OpenAI API Key');
+rrmdir(dirname($f));
+
+$f2 = tempFile('OPENAI_API_KEY=sk-proj-' . str_repeat('b', 40));
+$findings2 = $scanner->scanFile($f2);
+check('proj- формат: знайдено як "OpenAI API Key"', $findings2 !== [] && $findings2[0]->rule === 'OpenAI API Key');
+rrmdir(dirname($f2));
+
+$f3 = tempFile('ANTHROPIC_API_KEY=sk-ant-api03-' . str_repeat('c', 40));
+$findings3 = $scanner->scanFile($f3);
+check('Anthropic-ключ НЕ дублюється правилом "OpenAI API Key"', count(array_filter($findings3, fn($x) => $x->rule === 'OpenAI API Key')) === 0);
+rrmdir(dirname($f3));
+
+// --- Тест 15: Database Connection String ---
+echo "15. Database Connection String (пароль у URL підключення)\n";
+$f = tempFile('DATABASE_URL=postgres://myuser:MyS3cretPass123@db.example.com:5432/mydb');
+$findings = $scanner->scanFile($f);
+check('postgres:// знайдено', $findings !== [] && $findings[0]->rule === 'Database Connection String');
+
+$f2 = tempFile('MONGO_URI=mongodb+srv://admin:hunter2pass456@cluster0.mongodb.net/test');
+$findings2 = $scanner->scanFile($f2);
+check('mongodb+srv:// знайдено', $findings2 !== [] && $findings2[0]->rule === 'Database Connection String');
+
+$f3 = tempFile('# просто приклад формату без облікових даних' . "\n" . 'REDIS_URL=redis://localhost:6379');
+$findings3 = $scanner->scanFile($f3);
+check('URL без user:pass@ не дає хибної знахідки', $findings3 === []);
+
+rrmdir(dirname($f));
+rrmdir(dirname($f2));
+rrmdir(dirname($f3));
+
 echo "\n======================================\n";
 echo "Успішно: {$passed} | Провалено: {$failures}\n";
 

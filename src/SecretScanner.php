@@ -52,6 +52,17 @@ final class SecretScanner
             'Slack Token' => '/\bxox[baprs]-[A-Za-z0-9-]{10,}\b/',
             'Stripe Live Key' => '/\b(sk|pk|rk)_live_[A-Za-z0-9]{16,}\b/',
             'Google API Key' => '/\bAIza[0-9A-Za-z\-_]{35}\b/',
+            // (?!ant-) — щоб не дублювати "OpenAI API Key" нижче на кожному
+            // Anthropic-ключі: обидва починаються на "sk-", далі формати
+            // структурно різні (в Anthropic після "ant-" завжди дефіс, тому
+            // в OpenAI-патерні природно й так не збіглося б — виняток тут
+            // явний, а не випадковий побічний ефект).
+            'Anthropic API Key' => '/\bsk-ant-[A-Za-z0-9\-_]{20,}\b/',
+            'OpenAI API Key' => '/\bsk-(?!ant-)(?:proj-)?[A-Za-z0-9\-_]{20,}\b/',
+            // scheme://user:pass@host — інша поверхня, ніж Generic Secret
+            // Assignment нижче (та шукає "ключ = значення", ця — пароль,
+            // вбудований прямо в URL підключення до БД/кешу).
+            'Database Connection String' => '/\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis):\/\/[^:\/\s"\']+:[^@\/\s"\']+@/',
             'Private Key Block' => '/-----BEGIN[ A-Z]*PRIVATE KEY-----/',
             'Generic Bearer Token' => '/\bBearer\s+[A-Za-z0-9\-._~+\/]{20,}=*/',
             // [:=]>? замість просто [:=] — інакше PHP-масиви ("password" => "...")
