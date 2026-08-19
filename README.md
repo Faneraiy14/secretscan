@@ -44,7 +44,7 @@ php bin/secretscan --json               # машинозчитуваний ви�
 | Google API Key | `AIza...` |
 | Anthropic API Key | `sk-ant-...` |
 | OpenAI API Key | `sk-...`, `sk-proj-...` |
-| Database Connection String | пароль прямо в URL: `postgres://user:pass@host`, `mysql://...`, `mongodb(+srv)://...`, `redis://...` |
+| Database Connection String | пароль прямо в URL: `postgres://<user>:<pass>@host`, `mysql://...`, `mongodb(+srv)://...`, `redis://...` |
 | Приватний ключ | блок `-----BEGIN ... PRIVATE KEY-----` |
 | Generic Bearer Token | `Bearer eyJ...` |
 | Generic Secret Assignment | `password = "..."`, `api_key: "..."` |

@@ -205,7 +205,7 @@ rrmdir(dirname($f3));
 
 // --- Тест 13: Anthropic API Key ---
 echo "13. Anthropic API Key\n";
-$f = tempFile('ANTHROPIC_API_KEY=sk-ant-api03-' . str_repeat('a', 40));
+$f = tempFile('ANTHROPIC_API_KEY=sk-ant-api03-' . str_repeat('a', 40)); // secretscan:ignore
 $findings = $scanner->scanFile($f);
 check('знайдено 1', count($findings) === 1);
 check('правило "Anthropic API Key"', $findings !== [] && $findings[0]->rule === 'Anthropic API Key');
@@ -219,23 +219,23 @@ check('класичний формат: знайдено 1', count($findings) ==
 check('класичний формат: правило "OpenAI API Key"', $findings !== [] && $findings[0]->rule === 'OpenAI API Key');
 rrmdir(dirname($f));
 
-$f2 = tempFile('OPENAI_API_KEY=sk-proj-' . str_repeat('b', 40));
+$f2 = tempFile('OPENAI_API_KEY=sk-proj-' . str_repeat('b', 40)); // secretscan:ignore
 $findings2 = $scanner->scanFile($f2);
 check('proj- формат: знайдено як "OpenAI API Key"', $findings2 !== [] && $findings2[0]->rule === 'OpenAI API Key');
 rrmdir(dirname($f2));
 
-$f3 = tempFile('ANTHROPIC_API_KEY=sk-ant-api03-' . str_repeat('c', 40));
+$f3 = tempFile('ANTHROPIC_API_KEY=sk-ant-api03-' . str_repeat('c', 40)); // secretscan:ignore
 $findings3 = $scanner->scanFile($f3);
 check('Anthropic-ключ НЕ дублюється правилом "OpenAI API Key"', count(array_filter($findings3, fn($x) => $x->rule === 'OpenAI API Key')) === 0);
 rrmdir(dirname($f3));
 
 // --- Тест 15: Database Connection String ---
 echo "15. Database Connection String (пароль у URL підключення)\n";
-$f = tempFile('DATABASE_URL=postgres://myuser:MyS3cretPass123@db.example.com:5432/mydb');
+$f = tempFile('DATABASE_URL=postgres://myuser:MyS3cretPass123@db.example.com:5432/mydb'); // secretscan:ignore
 $findings = $scanner->scanFile($f);
 check('postgres:// знайдено', $findings !== [] && $findings[0]->rule === 'Database Connection String');
 
-$f2 = tempFile('MONGO_URI=mongodb+srv://admin:hunter2pass456@cluster0.example.net/test');
+$f2 = tempFile('MONGO_URI=mongodb+srv://admin:hunter2pass456@cluster0.example.net/test'); // secretscan:ignore
 $findings2 = $scanner->scanFile($f2);
 check('mongodb+srv:// знайдено', $findings2 !== [] && $findings2[0]->rule === 'Database Connection String');
 
