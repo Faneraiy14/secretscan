@@ -249,8 +249,21 @@ final class SecretScanner
         return $chunk !== false && str_contains($chunk, "\0");
     }
 
+    // UUID (8-4-4-4-12 hex) — скрізь у коді (record id, session id,
+    // correlation id), і випадковий UUID природно близький до максимуму
+    // ентропії Шеннона для свого алфавіту (16 hex-символів, log2(16)=4 -
+    // рівно поріг ENTROPY_THRESHOLD). Без цього винятку УСЯКИЙ UUID у
+    // проєкті хибно спрацьовував би як "High Entropy String" - живий
+    // репро: $sessionId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890" ловився
+    // до цього фіксу. Жоден із текстових PLACEHOLDER_MARKERS цього не
+    // покриває, бо UUID не містить слів на кшталт "example"/"test".
+    private const UUID_PATTERN = '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i';
+
     private function looksLikePlaceholder(string $value): bool
     {
+        if (preg_match(self::UUID_PATTERN, $value) === 1) {
+            return true;
+        }
         $lower = strtolower($value);
         foreach (self::PLACEHOLDER_MARKERS as $marker) {
             if (str_contains($lower, $marker)) {

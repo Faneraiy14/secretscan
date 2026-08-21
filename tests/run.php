@@ -247,6 +247,23 @@ rrmdir(dirname($f));
 rrmdir(dirname($f2));
 rrmdir(dirname($f3));
 
+// --- Тест 16: UUID — не секрет, попри високу ентропію Шеннона ---
+echo "16. UUID не дає хибної знахідки (High Entropy String)\n";
+$f = tempFile('$sessionId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";');
+$findings = $scanner->scanFile($f);
+check('UUID проігноровано', $findings === []);
+rrmdir(dirname($f));
+
+$f2 = tempFile('$recordId = "550e8400-e29b-41d4-a716-446655440000";');
+$findings2 = $scanner->scanFile($f2);
+check('другий UUID теж проігноровано', $findings2 === []);
+rrmdir(dirname($f2));
+
+$f3 = tempFile('$token = "ghp_' . str_repeat('a', 36) . '";'); // secretscan:ignore
+$findings3 = $scanner->scanFile($f3);
+check('справжній токен УСЕ ЩЕ ловиться (виняток не занадто широкий)', $findings3 !== [] && $findings3[0]->rule === 'GitHub Personal Access Token');
+rrmdir(dirname($f3));
+
 echo "\n======================================\n";
 echo "Успішно: {$passed} | Провалено: {$failures}\n";
 
