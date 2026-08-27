@@ -1,17 +1,20 @@
 # secretscan
 
-CLI-утиліта, що шукає випадково закомічені секрети (API-ключі, токени,
-приватні ключі) у файлах проєкту — до того, як вони потраплять у git
-разом з рештою коду.
+*[Українською](README.uk.md)*
 
-## Навіщо
+A CLI tool that finds accidentally committed secrets (API keys,
+tokens, private keys) in your project's files — before they land in
+git along with the rest of the code.
 
-Токен, вставлений прямо в код "тимчасово, потім винесу", лишається в
-git-історії назавжди, навіть якщо його видалити наступним комітом.
-`secretscan` ловить це до коміту (`--fix` тут не потрібен — секрет не
-можна "автовиправити", тільки прибрати руками й перевипустити).
+## Why
 
-## Встановлення
+A token pasted straight into the code "temporarily, I'll move it out
+later" stays in the git history forever, even if you delete it in the
+next commit. `secretscan` catches this before the commit (`--fix`
+isn't offered here — a secret can't be "auto-fixed", only removed by
+hand and rotated).
+
+## Install
 
 ```bash
 git clone https://github.com/Faneraiy14/secretscan.git
@@ -19,23 +22,23 @@ cd secretscan
 composer install --no-dev
 ```
 
-Або без composer — залежностей нема, `php bin/secretscan` працює одразу
-з клону.
+Or without composer — there are no dependencies, `php bin/secretscan`
+works right out of the clone.
 
-## Використання
+## Usage
 
 ```bash
-php bin/secretscan                      # поточна папка
-php bin/secretscan src/                 # конкретна папка чи файл
-php bin/secretscan --json               # машинозчитуваний вивід для CI
+php bin/secretscan                      # current folder
+php bin/secretscan src/                 # a specific folder or file
+php bin/secretscan --json               # machine-readable output for CI
 ```
 
-`.git/`, `node_modules/`, `vendor/` пропускаються завжди — там або
-службові дані, або чужий код.
+`.git/`, `node_modules/`, `vendor/` are always skipped — they hold
+either internal data or someone else's code.
 
-## Що ловить
+## What it catches
 
-| Правило | Приклад |
+| Rule | Example |
 |---|---|
 | GitHub Personal Access Token | `ghp_...`, `github_pat_...` |
 | AWS Access Key ID | `AKIA...` |
@@ -44,73 +47,74 @@ php bin/secretscan --json               # машинозчитуваний ви�
 | Google API Key | `AIza...` |
 | Anthropic API Key | `sk-ant-...` |
 | OpenAI API Key | `sk-...`, `sk-proj-...` |
-| Database Connection String | пароль прямо в URL: `postgres://<user>:<pass>@host`, `mysql://...`, `mongodb(+srv)://...`, `redis://...` |
-| Приватний ключ | блок `-----BEGIN ... PRIVATE KEY-----` |
+| Database Connection String | password right in the URL: `postgres://<user>:<pass>@host`, `mysql://...`, `mongodb(+srv)://...`, `redis://...` |
+| Private key | a `-----BEGIN ... PRIVATE KEY-----` block |
 | Generic Bearer Token | `Bearer eyJ...` |
 | Generic Secret Assignment | `password = "..."`, `api_key: "..."` |
-| High Entropy String (Шеннон) | будь-який рядковий літерал ≥20 символів з ентропією ≥4.0 біт/символ — ловить власні токени без відомого формату |
+| High Entropy String (Shannon) | any string literal ≥20 characters with entropy ≥4.0 bits/char — catches custom tokens with no known format |
 
-Значення, що виглядають як заглушка (`your_key_here`, `changeme`,
-`example`, `<...>`, `{{...}}` тощо), пропускаються — інакше кожен
-`.env.example` провалював би перевірку.
+Values that look like placeholders (`your_key_here`, `changeme`,
+`example`, `<...>`, `{{...}}`, etc.) are skipped — otherwise every
+`.env.example` would fail the check.
 
-Ентропійна перевірка — евристика, а не точний детектор: реальний текст
-(речення, ідентифікатори) має помітно нижчу ентропію на символ, ніж
-випадковий base64/hex, тож хибні спрацювання рідкісні, але можливі —
-позначай такі `secretscan:ignore`.
+The entropy check is a heuristic, not an exact detector: real text
+(sentences, identifiers) has noticeably lower entropy per character
+than random base64/hex, so false positives are rare but possible —
+mark those with `secretscan:ignore`.
 
 ## Redaction
 
-Знайдене значення в консолі й у `--json` завжди показується частково:
-перші й останні 4 символи, решта — зірочки. Досить, щоб впізнати "той
-самий" секрет, замало, щоб хтось підглянув його зі скріншота логів CI.
+A found value is always shown partially in the console and in
+`--json`: the first and last 4 characters, the rest replaced with
+asterisks. Enough to recognize it's "the same" secret, not enough for
+someone to read it off a CI log screenshot.
 
-## Хибні спрацювання
+## False positives
 
-Якщо якийсь рядок навмисно містить приклад/фікстуру, що виглядає як
-секрет (тести, документація) — додай коментар `secretscan:ignore` в
-кінці рядка, і його пропустять:
+If a line intentionally contains an example/fixture that looks like a
+secret (tests, docs), add a `secretscan:ignore` comment at the end of
+the line and it'll be skipped:
 
 ```php
 $fakeToken = "ghp_exampleexampleexampleexampleexam1"; // secretscan:ignore
 ```
 
-## У CI
+## In CI
 
-Готовий GitHub Action — підключи в будь-якому репозиторії без composer
-install, PHP ставиться автоматично:
+A ready-made GitHub Action — drop it into any repo without a
+composer install, PHP is set up automatically:
 
 ```yaml
 - uses: actions/checkout@v4
 - uses: Faneraiy14/secretscan@main
   with:
-    path: .   # необов'язково, за замовчуванням '.'
+    path: .   # optional, defaults to '.'
 ```
 
-Крок падає (exit 1), якщо знайдено підозрілі значення — це блокує merge
-через required status check у налаштуваннях гілки GitHub.
+The step fails (exit 1) if suspicious values are found — blocks the
+merge via a required status check in the GitHub branch settings.
 
-Або вручну, без composite action:
+Or manually, without the composite action:
 
 ```yaml
 - run: php bin/secretscan --json || exit 1
 ```
 
-Exit-код 1, якщо щось знайдено, 0 — якщо чисто, 2 — помилка (напр.
-неіснуючий шлях).
+Exit code 1 if something was found, 0 if clean, 2 for an error (e.g.
+a nonexistent path).
 
-## Тести
+## Tests
 
 ```bash
 php tests/run.php
 ```
 
-39 перевірок: кожне правило окремо (включно з ентропійною), редагування
-значення, заглушки, бінарні файли, рекурсія й виключення папок,
-`secretscan:ignore`, дедуплікація regex/ентропія на тому самому
-значенні, CLI-рівень (`--json`, exit-коди, `--help`) через реальний
-виклик процесу.
+39 checks: each rule tested individually (including the entropy one),
+value redaction, placeholders, binary files, folder recursion and
+exclusion, `secretscan:ignore`, deduplication of regex/entropy on the
+same value, CLI-level behavior (`--json`, exit codes, `--help`) via a
+real process call.
 
-## Ліцензія
+## License
 
-MIT — див. [LICENSE](LICENSE). Автор — Faneraiy14.
+MIT — see [LICENSE](LICENSE). Author: Faneraiy14.
