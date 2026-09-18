@@ -18,5 +18,8 @@
     },
     "bin": [
         "bin/secretscan"
-    ]
+    ],
+    "require-dev": {
+        "phpstan/phpstan": "^2.2"
+    }
 }

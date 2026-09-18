@@ -224,7 +224,9 @@ final class SecretScanner
         );
 
         foreach ($iterator as $fileInfo) {
-            /** @var \SplFileInfo $fileInfo */
+            if (!$fileInfo instanceof \SplFileInfo) {
+                continue;
+            }
             foreach ($excludeDirs as $dir) {
                 if (str_contains($fileInfo->getPathname(), DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR)) {
                     continue 2;
