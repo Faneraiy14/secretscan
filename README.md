@@ -106,14 +106,15 @@ a nonexistent path).
 ## Tests
 
 ```bash
-php tests/run.php
+composer test
 ```
 
-39 checks: each rule tested individually (including the entropy one),
-value redaction, placeholders, binary files, folder recursion and
+PHPUnit, 27 tests: each rule tested individually (including the entropy
+one), value redaction, placeholders, binary files, folder recursion and
 exclusion, `secretscan:ignore`, deduplication of regex/entropy on the
-same value, CLI-level behavior (`--json`, exit codes, `--help`) via a
-real process call.
+same value (`tests/RuleDetectionTest.php`, `tests/ScanBehaviorTest.php`),
+CLI-level behavior (`--json`, exit codes, `--help`) via a real process
+call (`tests/CliTest.php`).
 
 ## License
 
